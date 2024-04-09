@@ -4,6 +4,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const axios = require('axios');
+const moment = require('moment');
 const bodyParser = require('body-parser');
 
 app.use(cors());
@@ -51,6 +52,45 @@ app.get("/", (req, res) => {
   console.log("server is running");
   res.send("Server is running");
 });
+
+// Function to make the API call
+const callApi = async () => {
+  const todayDate = moment().format('YYYY-MM-DD')
+  try {
+      await axios.get(`https://report.taxfile.co.in/Report/TaskSummaryReportCustom?CompanyID=267&ReportMode=EXPORT&custid=taxfilecrm&PartyId=0&TaskStatus=&startdate=${todayDate}&endDate=${todayDate}&AssignTo=&AssignBy=&ProjectId=0&CategoryId=0&TaxadminId=0&TaskType=Task&ToMail=helpsurat@gmail.com&Subject=Task Report ${todayDate}`, {
+        mode: 'no-cors'
+      });
+      console.log(`Report sent to successfully: ${new Date().toLocaleString()}`);
+  } catch (error) {
+      console.error('Error calling API:', error.message);
+  }
+};
+// Calculate the time until the next 6:30 PM
+const calculateNextCallTime = () => {
+  const now = new Date();
+  const nextCallTime = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      18, // 6:30 PM
+      30,
+      0
+  );
+  if (nextCallTime <= now) {
+      nextCallTime.setDate(nextCallTime.getDate() + 1); // Next day
+  }
+  return nextCallTime.getTime() - now.getTime();
+};
+
+// Call the API initially
+callApi();
+
+// Set interval to call the API daily at 6:30 PM
+const interval = calculateNextCallTime();
+setTimeout(() => {
+  callApi();
+  setInterval(callApi, 24 * 60 * 60 * 1000); // Repeat every 24 hours
+}, interval);
 
 app.post("/base64", async function (req, res) {
   try {
