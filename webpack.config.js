@@ -5,6 +5,6 @@ module.exports = {
     target: 'node', // Tell webpack to bundle for Node.js environment
     output: {
         path: path.resolve(__dirname, 'dist'), // Output directory
-        filename: 'server.bundle.js' // Output file name
+        filename: 'server.js' // Output file name
     }
 };
