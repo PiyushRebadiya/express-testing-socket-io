@@ -6,6 +6,13 @@ const cors = require("cors");
 const axios = require('axios');
 const moment = require('moment');
 const bodyParser = require('body-parser');
+const { LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
+const qrimage = require('qr-image');
+const fs = require('fs');
+const { createClient } = require("./whatsup/client");
+
+// const wwebVersion = '2.2407.3';
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -53,44 +60,124 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
+app.get("/whatsapp", async (req, res) => {
+  console.log("req123123", req.query)
+  const { name } = req.query;
+  if (!name) {
+    res.send("Enter Username!")
+  }
+  const client = await createClient(name);
+  // When the client is ready, run this code (only once)
+  client.once('ready', () => {
+    console.log('Client is ready!');
+    // res.send('Client is ready!');
+  });
+
+  // When the client received QR-Code
+  // client.on('qr', (qr) => {
+  //     console.log('QR RECEIVED', qr);
+  //     qrcode.generate(qr, {small: true});
+  //     res.send({
+  //         qr: qr
+  //     });
+  // });
+  // When the client received QR code
+  client.on('qr', async (qr) => {
+    console.log('QR code received:', qr);
+    var code = qrimage.image(qr, { type: 'svg' });
+    res.type('svg');
+    code.pipe(res);
+  });
+
+  // Listening to all incoming messages
+  client.on('message_create', message => {
+    console.log("===>>", message.body);
+    console.log("===>> message", message);
+  });
+
+  client.on('message_create', async message => {
+    // if (message.body === 'hello') {
+    // 	// send back "pong" to the chat the message was sent in
+    // 	client.sendMessage(message.from, 'Hello I am Piyush. I am here to help you.');
+    // }
+    if (message.body === 'Hi') {
+      console.log("sent message  ===============>>>>>>>>>>> ");
+      console.log("message123123", message);
+      try {
+        // const media = await MessageMedia.fromUrl('https://report.taxfile.co.in/Report/TransactionReport?CompanyID=267&CGuid=/B0AYJVEE-RUMGHRXI-QB0XH34M/&ReportMode=Sales&custid=taxfilecrm&ExportMode=IMG');
+        // const media = await MessageMedia.fromUrl('https://report.taxfile.co.in/HTMSRC.JPEG', { unsafeMime: true, filename: 'image.jpg' });
+        // client.sendMessage(message.from, media, {caption: "image" } );
+
+        // const media = await MessageMedia.fromUrl('https://report.taxfile.co.in/HTMSRC.JPEG');
+        //  const media = await MessageMedia.fromUrl('https://via.placeholder.com/350x150.png');
+        const bas = await urlToBase64('https://report.taxfile.co.in/HTMSRC.JPEG');
+        const media = await new MessageMedia("image/jpeg", bas, "image.jpg");
+        await client.sendMessage(message.from, media, { caption: "my image" });
+
+
+      } catch (error) {
+        console.error('Error downloading content:', error);
+      }
+    }
+  });
+
+
+  client.on('message', async (msg) => {
+    const chat = await msg.getChat();
+    console.log('chat', chat)
+    let user = await msg.getContact();
+    console.log('user', user)
+    if (msg.hasMedia) {
+      const media = await msg.downloadMedia();
+      console.log('media', media)
+      // do something with the media data here
+    }
+  });
+
+
+
+  // Start your client
+  client.initialize();
+})
+
 // Function to make the API call
 const callApi = async () => {
   const todayDate = moment().format('YYYY-MM-DD')
   try {
-      await axios.get(`https://report.taxfile.co.in/Report/TaskSummaryReportCustom?CompanyID=267&ReportMode=EXPORT&custid=taxfilecrm&PartyId=0&TaskStatus=&startdate=${todayDate}&endDate=${todayDate}&AssignTo=&AssignBy=&ProjectId=0&CategoryId=0&TaxadminId=0&TaskType=Task&ToMail=helpsurat@gmail.com&Subject=Task Report ${todayDate}`, {
-        mode: 'no-cors'
-      });
-      console.log(`Report sent to successfully: ${new Date().toLocaleString()}`);
+    await axios.get(`https://report.taxfile.co.in/Report/TaskSummaryReportCustom?CompanyID=267&ReportMode=EXPORT&custid=taxfilecrm&PartyId=0&TaskStatus=&startdate=${todayDate}&endDate=${todayDate}&AssignTo=&AssignBy=&ProjectId=0&CategoryId=0&TaxadminId=0&TaskType=Task&ToMail=shyamkhokhariya97@gmail.com&Subject=Task Report ${todayDate}`, {
+      mode: 'no-cors'
+    });
+    console.log(`Report sent to successfully: ${new Date().toLocaleString()}`);
   } catch (error) {
-      console.error('Error calling API:', error.message);
+    console.error('Error calling API:', error.message);
   }
 };
 // Calculate the time until the next 6:30 PM
 const calculateNextCallTime = () => {
   const now = new Date();
   const nextCallTime = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      18, // 6:30 PM
-      30,
-      0
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    18, // 6:30 PM
+    30,
+    0
   );
   if (nextCallTime <= now) {
-      nextCallTime.setDate(nextCallTime.getDate() + 1); // Next day
+    nextCallTime.setDate(nextCallTime.getDate() + 1); // Next day
   }
   return nextCallTime.getTime() - now.getTime();
 };
 
-// Call the API initially
-callApi();
+// // Call the API initially
+// callApi();
 
-// Set interval to call the API daily at 6:30 PM
-const interval = calculateNextCallTime();
-setTimeout(() => {
-  callApi();
-  setInterval(callApi, 24 * 60 * 60 * 1000); // Repeat every 24 hours
-}, interval);
+// // Set interval to call the API daily at 6:30 PM
+// const interval = calculateNextCallTime();
+// setTimeout(() => {
+//   callApi();
+//   setInterval(callApi, 24 * 60 * 60 * 1000); // Repeat every 24 hours
+// }, interval);
 
 app.post("/base64", async function (req, res) {
   try {

@@ -13,6 +13,8 @@
 
 /dist
 
+/.wwebjs_auth
+
 # misc
 .DS_Store
 .env.local
