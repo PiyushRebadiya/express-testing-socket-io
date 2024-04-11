@@ -6,11 +6,10 @@ const cors = require("cors");
 const axios = require('axios');
 const moment = require('moment');
 const bodyParser = require('body-parser');
-const { LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { LocalAuth, MessageMedia, Client } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const qrimage = require('qr-image');
 const fs = require('fs');
-const { createClient } = require("./whatsup/client");
 
 // const wwebVersion = '2.2407.3';
 
@@ -60,85 +59,88 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-app.get("/whatsapp", async (req, res) => {
-  console.log("req123123", req.query)
-  const { name } = req.query;
-  if (!name) {
-    res.send("Enter Username!")
-  }
-  const client = await createClient(name);
-  // When the client is ready, run this code (only once)
-  client.once('ready', () => {
-    console.log('Client is ready!');
-    // res.send('Client is ready!');
+const session = async (req, res, name) => {
+  const wwebVersion = '2.2407.3';
+  // req.whatsupWeb
+  const client = await new Client({
+    // const client = await new Client({
+    authStrategy: new LocalAuth({ clientId: name }), // Set clientId dynamically
+    puppeteer: { },
+    webVersionCache: {
+      type: 'remote',
+      remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${wwebVersion}.html`,
+    },
   });
 
-  // When the client received QR-Code
-  // client.on('qr', (qr) => {
-  //     console.log('QR RECEIVED', qr);
-  //     qrcode.generate(qr, {small: true});
-  //     res.send({
-  //         qr: qr
-  //     });
-  // });
+  // if(client?.info){
+  //   console.log('==>>>>>> Client is ready!');
+  //   return client
+  // }
+
+  // When the client is ready, log a message
+  client.on('ready', () => {
+    console.log('WhatsApp Client is ready!');
+    // res.send("ready");
+  });
+  client.on('authenticated', () => {
+    console.log('authenticated ===>>>>>>>>> !');
+    // res.send("ready");
+  });
+
   // When the client received QR code
   client.on('qr', async (qr) => {
     console.log('QR code received:', qr);
+    qrcode.generate(qr, {small: true});
     var code = qrimage.image(qr, { type: 'svg' });
     res.type('svg');
     code.pipe(res);
+    // res.send({
+    //   qr
+    // });
+
   });
 
-  // Listening to all incoming messages
-  client.on('message_create', message => {
-    console.log("===>>", message.body);
-    console.log("===>> message", message);
+  // When the client is disconnected, log a message and logout the user
+  client.on('disconnected', () => {
+    console.log('WhatsApp Client is disconnected!');
+    // client.disconnect();
+    // client.logout();
+    // res.send("disconnected");
+    client.destroy();
   });
 
-  client.on('message_create', async message => {
-    // if (message.body === 'hello') {
-    // 	// send back "pong" to the chat the message was sent in
-    // 	client.sendMessage(message.from, 'Hello I am Piyush. I am here to help you.');
-    // }
-    if (message.body === 'Hi') {
-      console.log("sent message  ===============>>>>>>>>>>> ");
-      console.log("message123123", message);
-      try {
-        // const media = await MessageMedia.fromUrl('https://report.taxfile.co.in/Report/TransactionReport?CompanyID=267&CGuid=/B0AYJVEE-RUMGHRXI-QB0XH34M/&ReportMode=Sales&custid=taxfilecrm&ExportMode=IMG');
-        // const media = await MessageMedia.fromUrl('https://report.taxfile.co.in/HTMSRC.JPEG', { unsafeMime: true, filename: 'image.jpg' });
-        // client.sendMessage(message.from, media, {caption: "image" } );
+  await client.initialize();
+  // next();
+  return client
+}
 
-        // const media = await MessageMedia.fromUrl('https://report.taxfile.co.in/HTMSRC.JPEG');
-        //  const media = await MessageMedia.fromUrl('https://via.placeholder.com/350x150.png');
-        const bas = await urlToBase64('https://report.taxfile.co.in/HTMSRC.JPEG');
-        const media = await new MessageMedia("image/jpeg", bas, "image.jpg");
-        await client.sendMessage(message.from, media, { caption: "my image" });
+app.get("/whatsapp", async (req, res) => {
+  // res.send("Server is running whatup");
+  const { name } = req.query;
+  console.log('name :>> ', name);
+  const todayDate = moment().format('YYYY-MM-DD hh:mm:ss');
+  try {
+    const client = await session(req, res, name);
+    const users = "9484573294,9712125572,8758185140"
+    const usersList = users.split(",");
 
-
-      } catch (error) {
-        console.error('Error downloading content:', error);
-      }
+    for (let i = 0; i < usersList.length; i++) {
+      const user = usersList[i];
+      await client.sendMessage(`91${user}@c.us`, `Time ${todayDate}`).then((r) => {
+        console.log("sendMessage", r)
+      })
     }
-  });
+    res.send("sent all message");
 
-
-  client.on('message', async (msg) => {
-    const chat = await msg.getChat();
-    console.log('chat', chat)
-    let user = await msg.getContact();
-    console.log('user', user)
-    if (msg.hasMedia) {
-      const media = await msg.downloadMedia();
-      console.log('media', media)
-      // do something with the media data here
-    }
-  });
-
-
-
-  // Start your client
-  client.initialize();
+    setTimeout(async () => {
+      await client.destroy();
+    }, 2000);
+    // await client.destroy();
+  } catch (error) {
+    console.log('error :>> ', error);
+  }
 })
+
 
 // Function to make the API call
 const callApi = async () => {
