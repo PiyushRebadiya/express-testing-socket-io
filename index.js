@@ -53,17 +53,21 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-// Function to make the API call
-const callApi = async () => {
+const reportAPIHandler = async (ToMail) => {
   const todayDate = moment().format('YYYY-MM-DD')
   try {
-      await axios.get(`https://report.taxfile.co.in/Report/TaskSummaryReportCustom?CompanyID=267&ReportMode=EXPORT&custid=taxfilecrm&PartyId=0&TaskStatus=&startdate=${todayDate}&endDate=${todayDate}&AssignTo=&AssignBy=&ProjectId=0&CategoryId=0&TaxadminId=0&TaskType=Task&ToMail=helpsurat@gmail.com&Subject=Task Report ${todayDate}`, {
-        mode: 'no-cors'
-      });
-      console.log(`Report sent to successfully: ${new Date().toLocaleString()}`);
-  } catch (error) {
-      console.error('Error calling API:', error.message);
-  }
+    await axios.get(`https://report.taxfile.co.in/Report/TaskSummaryReportCustom?CompanyID=267&ReportMode=EXPORT&custid=taxfilecrm&PartyId=0&TaskStatus=&startdate=${todayDate}&endDate=${todayDate}&AssignTo=&AssignBy=&ProjectId=0&CategoryId=0&TaxadminId=0&TaskType=Task&ToMail=${ToMail}&Subject=Task Report ${todayDate}`, {
+      mode: 'no-cors'
+    });
+    console.log(`Report sent to ${ToMail} successfully : ${new Date().toLocaleString()}`);
+} catch (error) {
+    console.error('Error calling API:', error.message);
+}
+}
+// Function to make the API call
+const callApi = async () => {
+  await reportAPIHandler("helpsurat@gmail.com");
+  await reportAPIHandler("dinesh01.monarch@gmail.com");
 };
 // Calculate the time until the next 6:30 PM
 const calculateNextCallTime = () => {
