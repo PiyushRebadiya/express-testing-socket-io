@@ -169,6 +169,6 @@ app.get("/whatsapp", async (req, res) => {
   }
 })
 
-server.listen(808, () => {
-  console.log("SERVER IS RUNNING 808");
+server.listen(8080, () => {
+  console.log("SERVER IS RUNNING 8080");
 });
