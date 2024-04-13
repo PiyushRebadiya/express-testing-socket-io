@@ -76,7 +76,11 @@ const session = async (req, res, name, userId) => {
   const client = await new Client({
     // const client = await new Client({
     authStrategy: new LocalAuth({ clientId: name }), // Set clientId dynamically
-    puppeteer: { },
+    puppeteer: { 
+      headless: true,
+      slowMo: 300,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    },
     webVersionCache: {
       type: 'remote',
       remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${wwebVersion}.html`,
