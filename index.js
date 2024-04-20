@@ -68,6 +68,7 @@ const reportAPIHandler = async (ToMail) => {
 const callApi = async () => {
   await reportAPIHandler("helpsurat@gmail.com");
   await reportAPIHandler("dinesh01.monarch@gmail.com");
+  await reportAPIHandler("shyamkhokhariya97@gmail.com");
 };
 // Calculate the time until the next 6:30 PM
 const calculateNextCallTime = () => {
@@ -87,7 +88,7 @@ const calculateNextCallTime = () => {
 };
 
 // Call the API initially
-callApi();
+// callApi();
 
 // Set interval to call the API daily at 6:30 PM
 const interval = calculateNextCallTime();
