@@ -4,7 +4,7 @@ var Service = require('node-windows').Service;
 var svc = new Service({
     name: 'Taxfile Web Socket Node CRM Server',
     description: 'Running Web Socket Node CRM Server Of Taxfile',
-    script: 'C:\\Users\\ARTIS\\Desktop\\Taxfile\\backend\\Taxfile-CRM-\\index.js',
+    script: 'C:\\inetpub\\wwwroot\\WebSocketServer\\socket-node\\index.js',
     //, workingDirectory: '...'
     //, allowServiceLogon: true
 });
