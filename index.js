@@ -54,9 +54,10 @@ app.get("/", (req, res) => {
 });
 
 const reportAPIHandler = async (ToMail) => {
-  const todayDate = moment().format('YYYY-MM-DD')
+  const todayDate = moment().format('YYYY-MM-DD');
+  const todayDateCustomFormat = moment().format('DD-MM-YYYY');
   try {
-    await axios.get(`https://report.taxfile.co.in/Report/TaskSummaryReportCustom?CompanyID=267&ReportMode=EXPORT&custid=taxfilecrm&PartyId=0&TaskStatus=&startdate=${todayDate}&endDate=${todayDate}&AssignTo=&AssignBy=&ProjectId=0&CategoryId=0&TaxadminId=0&TaskType=Task&ToMail=${ToMail}&Subject=TAXCRM - TODAY Daily Call or Task Report ${todayDate}`, {
+    await axios.get(`https://report.taxfile.co.in/Report/TaskSummaryReportCustom?CompanyID=267&ReportMode=EXPORT&custid=taxfilecrm&PartyId=0&TaskStatus=&startdate=${todayDate}&endDate=${todayDate}&AssignTo=&AssignBy=&ProjectId=0&CategoryId=0&TaxadminId=0&TaskType=Task&ToMail=${ToMail}&Subject=TAXCRM - TODAY Daily Call or Task Report ${todayDateCustomFormat}`, {
       mode: 'no-cors'
     });
     console.log(`Report sent to ${ToMail} successfully : ${new Date().toLocaleString()}`);
